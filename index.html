@@ -263,7 +263,7 @@
     <div class="card-title">Expenses</div>
     <ul id="expense-list">
       <li class="empty-state">
-        <div class="empty-icon">&#128139;</div>
+        
         <div>No expenses added yet</div>
       </li>
     </ul>
@@ -337,7 +337,7 @@ function renderList() {
   ul.innerHTML = '';
 
   if (expenses.length === 0) {
-    ul.innerHTML = '<li class="empty-state"><div class="empty-icon">&#128139;</div><div>No expenses added yet</div></li>';
+    ul.innerHTML = '<li class="empty-state"><div>No expenses added yet</div></li>';
     return;
   }
 
