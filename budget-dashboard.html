@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budget Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & VARIABLES ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0f0f13;
+      --surface:  #18181f;
+      --surface2: #22222c;
+      --border:   #2e2e3a;
+      --accent:   #7c6af7;
+      --green:    #34d399;
+      --red:      #f87171;
+      --yellow:   #fbbf24;
+      --text:     #f0effe;
+      --muted:    #8884a8;
+    }
+
+    /* ── BODY & LAYOUT ── */
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+
+    /* ── HEADER ── */
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 2rem; font-weight: 600; color: var(--text); }
+    .header p  { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    /* ── METRIC CARDS ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 1.2rem;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+    }
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .metric-value.positive { color: var(--green); }
+    .metric-value.negative { color: var(--red); }
+    .metric-value.warn     { color: var(--yellow); }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.2rem;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .progress-bar-bg {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--green);
+      width: 0%;
+      transition: width 0.5s ease, background 0.3s;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1.2rem;
+    }
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .form-row  { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .field     { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; color: var(--muted); }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="number"] { font-family: 'JetBrains Mono', monospace; }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); opacity: 0.5; }
+
+    .form-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .error-msg { font-size: 12px; color: var(--red); min-height: 18px; margin-top: 5px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-danger  { background: transparent; border: 1px solid #4b3030; color: var(--red); }
+    .btn-danger:hover { background: #2a1818; }
+
+    /* ── EXPENSE LIST ── */
+    #expense-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .expense-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .exp-left { display: flex; align-items: center; gap: 10px; }
+    .exp-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .exp-name { font-size: 14px; }
+    .exp-right { display: flex; align-items: center; gap: 12px; }
+    .exp-amount { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--red); }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .remove-btn:hover { color: var(--red); }
+    .empty-state { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 14px; }
+    .empty-icon  { font-size: 30px; margin-bottom: 8px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 500px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metrics .metric-card:last-child { grid-column: 1 / -1; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-row  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <h1>Budget Dashboard</h1>
+    <p>Track your salary &amp; expenses in real time</p>
+  </header>
+
+  <!-- METRIC CARDS -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Total Salary</div>
+      <div class="metric-value" id="disp-salary">Rs 0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total Expenses</div>
+      <div class="metric-value" id="disp-expenses">Rs 0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Remaining Balance</div>
+      <div class="metric-value" id="disp-balance">Rs 0</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Spent</span>
+      <span id="progress-pct">0% of salary used</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- SALARY FORM -->
+  <div class="card">
+    <div class="card-title">Set Salary</div>
+    <div class="form-row">
+      <div class="field">
+        <label for="salary-input">Monthly Salary</label>
+        <input type="number" id="salary-input" placeholder="e.g. 50000" min="0" />
+      </div>
+      <button class="btn btn-primary" onclick="setSalary()">Set</button>
+    </div>
+    <div class="error-msg" id="salary-error"></div>
+  </div>
+
+  <!-- EXPENSE FORM -->
+  <div class="card">
+    <div class="card-title">Add Expense</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="exp-name">Expense Name</label>
+        <input type="text" id="exp-name" placeholder="e.g. Rent" />
+      </div>
+      <div class="field">
+        <label for="exp-amount">Amount</label>
+        <input type="number" id="exp-amount" placeholder="e.g. 12000" min="0" />
+      </div>
+    </div>
+    <div class="error-msg" id="exp-error"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addExpense()">+ Add Expense</button>
+      <button class="btn btn-danger"  onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- EXPENSE LIST -->
+  <div class="card">
+    <div class="card-title">Expenses</div>
+    <ul id="expense-list">
+      <li class="empty-state">
+        <div class="empty-icon">&#128139;</div>
+        <div>No expenses added yet</div>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  app.js — ALL LOGIC INLINE (no external file needed)
+// ============================================================
+
+// ── 1. STATE ─────────────────────────────────────────────────
+var salary   = 0;
+var expenses = [];
+
+// ── 2. STORAGE ───────────────────────────────────────────────
+function saveToStorage() {
+  try {
+    localStorage.setItem('budget_salary',   JSON.stringify(salary));
+    localStorage.setItem('budget_expenses', JSON.stringify(expenses));
+  } catch(e) { /* file:// may block storage — data lives in memory */ }
+}
+
+function loadFromStorage() {
+  try {
+    var s = localStorage.getItem('budget_salary');
+    var e = localStorage.getItem('budget_expenses');
+    if (s !== null) salary   = JSON.parse(s);
+    if (e !== null) expenses = JSON.parse(e);
+  } catch(e) {}
+}
+
+// ── 3. FORMAT ────────────────────────────────────────────────
+function fmt(n) {
+  return 'Rs ' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
+// ── 4. TOTALS ────────────────────────────────────────────────
+function totalExp() {
+  var t = 0;
+  for (var i = 0; i < expenses.length; i++) t += expenses[i].amount;
+  return t;
+}
+
+// ── 5. UPDATE METRIC CARDS ───────────────────────────────────
+function updateMetrics() {
+  var exp     = totalExp();
+  var balance = salary - exp;
+
+  document.getElementById('disp-salary').textContent   = fmt(salary);
+  document.getElementById('disp-expenses').textContent = fmt(exp);
+
+  var balEl = document.getElementById('disp-balance');
+  balEl.textContent = fmt(balance);
+  balEl.className   = 'metric-value';
+  if      (balance > 0)                   balEl.classList.add('positive');
+  else if (balance < 0)                   balEl.classList.add('negative');
+  else if (balance === 0 && salary > 0)   balEl.classList.add('warn');
+
+  var pct  = salary > 0 ? Math.min((exp / salary) * 100, 100) : 0;
+  var fill = document.getElementById('progress-fill');
+  fill.style.width      = pct.toFixed(1) + '%';
+  fill.style.background = pct >= 90 ? '#f87171' : pct >= 70 ? '#fbbf24' : '#34d399';
+  document.getElementById('progress-pct').textContent = pct.toFixed(0) + '% of salary used';
+}
+
+// ── 6. RENDER EXPENSE LIST ───────────────────────────────────
+function renderList() {
+  var ul = document.getElementById('expense-list');
+  ul.innerHTML = '';
+
+  if (expenses.length === 0) {
+    ul.innerHTML = '<li class="empty-state"><div class="empty-icon">&#128139;</div><div>No expenses added yet</div></li>';
+    return;
+  }
+
+  for (var i = 0; i < expenses.length; i++) {
+    var li = document.createElement('li');
+    li.className = 'expense-item';
+    li.innerHTML =
+      '<div class="exp-left">' +
+        '<div class="exp-dot"></div>' +
+        '<span class="exp-name">' + expenses[i].name + '</span>' +
+      '</div>' +
+      '<div class="exp-right">' +
+        '<span class="exp-amount">-' + fmt(expenses[i].amount) + '</span>' +
+        '<button class="remove-btn" onclick="removeExpense(' + i + ')">&times;</button>' +
+      '</div>';
+    ul.appendChild(li);
+  }
+}
+
+// ── 7. ACTIONS ───────────────────────────────────────────────
+function setSalary() {
+  var input = document.getElementById('salary-input');
+  var val   = parseFloat(input.value);
+
+  if (isNaN(val) || val < 0) {
+    document.getElementById('salary-error').textContent = 'Enter a valid positive number.';
+    return;
+  }
+  document.getElementById('salary-error').textContent = '';
+  salary      = val;
+  input.value = '';
+  saveToStorage();
+  updateMetrics();
+}
+
+function addExpense() {
+  var nameEl   = document.getElementById('exp-name');
+  var amountEl = document.getElementById('exp-amount');
+  var name     = nameEl.value.trim();
+  var amount   = parseFloat(amountEl.value);
+  var errEl    = document.getElementById('exp-error');
+
+  if (!name) {
+    errEl.textContent = 'Expense name cannot be empty.';
+    return;
+  }
+  if (isNaN(amount) || amount <= 0) {
+    errEl.textContent = 'Amount must be a positive number.';
+    return;
+  }
+
+  errEl.textContent  = '';
+  expenses.push({ name: name, amount: amount });
+  nameEl.value   = '';
+  amountEl.value = '';
+  saveToStorage();
+  renderList();
+  updateMetrics();
+}
+
+function removeExpense(index) {
+  expenses.splice(index, 1);
+  saveToStorage();
+  renderList();
+  updateMetrics();
+}
+
+function clearAll() {
+  if (expenses.length === 0 && salary === 0) return;
+  if (!confirm('Clear all data?')) return;
+  salary = 0; expenses = [];
+  saveToStorage();
+  renderList();
+  updateMetrics();
+}
+
+// ── 8. ENTER KEY SUPPORT ─────────────────────────────────────
+document.getElementById('salary-input').onkeydown = function(e) { if (e.key === 'Enter') setSalary(); };
+document.getElementById('exp-amount').onkeydown   = function(e) { if (e.key === 'Enter') addExpense(); };
+
+// ── 9. INIT ──────────────────────────────────────────────────
+loadFromStorage();
+renderList();
+updateMetrics();
+</script>
+</body>
+</html>
